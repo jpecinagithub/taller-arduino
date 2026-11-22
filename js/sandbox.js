@@ -32,10 +32,11 @@ const Sandbox = (() => {
     state = freshIds(EXERCISES.find(e => e.id === 7).layout);
     save();
   }
-  function loadLayout(layout) {
+  function loadLayout(layout, label) {
     state = freshIds(layout);
     selectedComp = selectedWire = null; wireStart = null; placingType = null;
-    netHighlight = new Set(); netText = ''; flash = '';
+    netHighlight = new Set(); netText = '';
+    flash = label ? `✅ Maqueta cargada: ${label} (${state.components.length} componentes · ${state.wires.length} cables). Lo que hubiera en la placa se ha sustituido.` : '';
     save(); render();
   }
 
@@ -130,7 +131,7 @@ const Sandbox = (() => {
   function statusHtml() {
     const nc = state.components.length, nw = state.wires.length;
     let msg = `<b>${nc}</b> componentes · <b>${nw}</b> cables. `;
-    if (flash) msg += `<span style="color:#c22525;font-weight:600">${flash}</span> `;
+    if (flash) msg += `<span style="color:${flash.startsWith('✅') ? '#137333' : '#c22525'};font-weight:600">${flash}</span> `;
     if (placingType) msg += `Colocando <b>${Board.DEFS[placingType].name}</b>: el fantasma te sigue; clica un agujero libre (círculo verde) para soltarlo. Clic derecho o <span class="kbd">Esc</span> para terminar.`;
     else if (wireStart) msg += `Cable desde el <b>${pretty(wireStart)}</b>: clica el agujero o pin de destino. La isla del origen va iluminada en naranja. <span class="kbd">Esc</span> cancela.`;
     else if (selectedComp) {
@@ -362,7 +363,7 @@ const Sandbox = (() => {
     const loadSel = document.getElementById('sb-load-ex');
     if (loadSel) loadSel.addEventListener('change', e => {
       const ex = EXERCISES.find(x => x.id === parseInt(e.target.value, 10));
-      if (ex) loadLayout(ex.layout);
+      if (ex) loadLayout(ex.layout, `Ejercicio ${ex.id} · ${ex.title}`);
       e.target.value = '';
     });
     const clearBtn = document.getElementById('sb-clear');
