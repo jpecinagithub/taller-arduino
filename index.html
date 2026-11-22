@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller Arduino — Los 15 proyectos del Starter Kit</title>
+<meta name="description" content="Web app de Jon con los 15 proyectos del Arduino Starter Kit: explicación, ideas clave, esquemas eléctrico y electrónico, maqueta y un sandbox editable tipo Tinkercad.">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🔌</div>
+      <div>
+        <div class="brand-title">Taller Arduino</div>
+        <div class="brand-sub">Starter Kit · 15 proyectos</div>
+      </div>
+    </div>
+    <nav id="menu"></nav>
+    <div class="side-foot">
+      <div class="progress-wrap">
+        <div class="progress-label"><span id="progress-text">0 de 15</span><span>completados</span></div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+      </div>
+      <p class="side-note">Kit oficial K030007 · UNO Rev3<br>Hecho en Tinkercad mientras llega el kit (27–28 nov).</p>
+    </div>
+  </aside>
+  <main id="view"></main>
+</div>
+<script src="js/board.js"></script>
+<script src="js/data.js"></script>
+<script src="js/schematic.js"></script>
+<script src="js/sandbox.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
