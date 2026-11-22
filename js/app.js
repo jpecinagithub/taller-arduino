@@ -63,9 +63,9 @@ const App = (() => {
 
     <section class="card">
       <h2><span class="h-ico">⚡</span>Esquema eléctrico</h2>
-      <p>El circuito desnudo: componentes y conexiones, sin microcontrolador. Así se pensaría sin Arduino de por medio.</p>
+      <p>El circuito a pelo: solo electricidad, alimentado por una <b>fuente de 5 V</b> en vez del Arduino. Fuera microcontrolador, fuera código, fuera pines.</p>
       <div class="svg-wrap">${Schematic.draw(ex, false)}</div>
-      <p class="legend">Cada fila es una rama del circuito. Los terminales +5V y GND son la alimentación; los terminales con nombre (D13, A0…) son los puntos que luego conectará el microcontrolador.</p>
+      <p class="legend">Cada fila es una rama. Donde el Arduino alimentaba un componente, aquí manda la <b>Fuente 5 V</b>. Donde el circuito «hablaba» con la placa (un pulsador o un sensor que la placa escuchaba), queda un terminal abierto: <b>Señal</b>. Y lo que solo existía gracias al microcontrolador ni siquiera aparece: sin cerebro, no hay nada que lo sostenga.</p>
     </section>
 
     <section class="card">

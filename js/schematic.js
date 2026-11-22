@@ -50,15 +50,44 @@ const Schematic = (() => {
     return wire + body + lab;
   }
 
-  function terminal(name, x, y, withUno, side) {
+  function terminal(name, x, y, withUno, side, simple) {
     const isRail = name === '+5V' || name === 'GND' || name === '+9V';
     const col = name === 'GND' ? '#1d2733' : (isRail ? '#d92b2b' : '#006e72');
     if (withUno && !isRail) {
       return `<rect x="${side === 'a' ? x - 64 : x}" y="${y - 13}" width="64" height="26" rx="5" fill="#1f6fb2"/>
               <text x="${side === 'a' ? x - 32 : x + 32}" y="${y + 4.5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(name)}</text>`;
     }
+    if (name === 'SEÑAL') {
+      return `<circle cx="${x}" cy="${y}" r="6" fill="#fff7e8" stroke="#b26a00" stroke-width="2.4"/>
+              <circle cx="${x}" cy="${y}" r="1.8" fill="#b26a00"/>
+              <text x="${x}" y="${side === 'a' ? y - 13 : y + 25}" text-anchor="middle" font-size="12" font-weight="700" fill="#b26a00">Señal</text>`;
+    }
+    const label = simple && name === '+5V' ? 'Fuente 5 V' : name;
     return `<circle cx="${x}" cy="${y}" r="5" fill="#fff" stroke="${col}" stroke-width="2.4"/>
-            <text x="${x}" y="${side === 'a' ? y - 12 : y + 24}" text-anchor="${side === 'a' ? 'middle' : 'middle'}" font-size="12" font-weight="700" fill="${col}">${esc(name)}</text>`;
+            <text x="${x}" y="${side === 'a' ? y - 12 : y + 24}" text-anchor="middle" font-size="12" font-weight="700" fill="${col}">${esc(label)}</text>`;
+  }
+
+  /* El esquema eléctrico de verdad: sin microcontrolador.
+     - Un pin que ALIMENTABA un componente (LED, servo, piezo…) pasa a ser la Fuente 5 V.
+     - Un divisor de sensor leído por un pin se redibuja entero desde la fuente (+5V → sensor → R → GND).
+     - Donde el circuito HABLABA con la placa (la placa escuchaba), queda un terminal abierto: SEÑAL.
+     - Las ramas que solo existían por el micro (tomas de señal puras, control↔control) desaparecen.
+     - El potenciómetro es un divisor entre la fuente y GND: así se dibuja. */
+  const PIN_RE = /^[DA]\d+$/;
+  const ACTUATORS = ['led', 'rgbled', 'piezo', 'servo', 'motor', 'lcd', 'hbridge', 'transistor', 'opto'];
+  const SENSORS = ['photo', 'tmp36'];
+  function electrify(br) {
+    const types = br.via.map(v => v[0]);
+    if (types.length === 1 && types[0] === 'dot') return null;
+    let a = br.a, b = br.b;
+    const aPin = PIN_RE.test(a), bPin = PIN_RE.test(b);
+    if (aPin && bPin) return null;
+    if (types.includes('pot')) { a = '+5V'; b = 'GND'; }
+    else {
+      if (aPin) a = types.some(t => ACTUATORS.includes(t) || SENSORS.includes(t)) ? '+5V' : 'SEÑAL';
+      if (bPin) b = 'SEÑAL';
+    }
+    return { a, via: br.via, b };
   }
 
   function wrapNote(txt, max = 86) {
@@ -73,7 +102,7 @@ const Schematic = (() => {
   }
 
   function draw(ex, withUno) {
-    const branches = ex.circuit || [];
+    const branches = withUno ? (ex.circuit || []) : (ex.circuit || []).map(electrify).filter(Boolean);
     const slotW = 96, x0 = 210;
     const maxVia = Math.max(1, ...branches.map(b => b.via.length));
     const W = Math.max(x0 + maxVia * slotW + 130, 660), rowH = 88, H = branches.length * rowH + 44;
@@ -91,7 +120,7 @@ const Schematic = (() => {
         s += `<circle cx="132" cy="${y}" r="4" fill="#e8c85a"/><text x="124" y="${y - 10}" text-anchor="end" font-size="11.5" font-weight="700" fill="#ffffff">${esc(br.a)}</text>`;
         s += `<line x1="132" y1="${y}" x2="${x0 - 46}" y2="${y}" stroke="#43525f" stroke-width="2"/>`;
       } else {
-        s += terminal(br.a, x0 - 92, y, false, 'a');
+        s += terminal(br.a, x0 - 92, y, false, 'a', !withUno);
         s += `<line x1="${x0 - 92}" y1="${y}" x2="${x0 - 46}" y2="${y}" stroke="#43525f" stroke-width="2"/>`;
       }
       /* componentes de la rama */
@@ -99,7 +128,7 @@ const Schematic = (() => {
       const lastX = x0 + (br.via.length - 1) * slotW;
       const endX = lastX + 92;
       s += `<line x1="${lastX + 46}" y1="${y}" x2="${endX}" y2="${y}" stroke="#43525f" stroke-width="2"/>`;
-      s += terminal(br.b, endX, y, withUno, 'b');
+      s += terminal(br.b, endX, y, withUno, 'b', !withUno);
       if (br.note) {
         const lines = wrapNote(br.note);
         lines.forEach((ln, j) => {
