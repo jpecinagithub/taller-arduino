@@ -100,7 +100,7 @@ const App = (() => {
       setTimeout(() => { ev.target.textContent = 'Copiar código'; }, 1600);
     });
     document.getElementById('to-sandbox').addEventListener('click', () => {
-      Sandbox.loadLayout(ex.layout, `Ejercicio ${ex.id} · ${ex.title}`);
+      Sandbox.loadLayout(ex.layout, `Ejercicio ${ex.id} · ${ex.title}`, ex.id);
       location.hash = '#/sandbox';
     });
     window.scrollTo(0, 0);

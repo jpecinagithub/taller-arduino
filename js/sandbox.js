@@ -30,10 +30,12 @@ const Sandbox = (() => {
       if (raw) { state = JSON.parse(raw); return; }
     } catch (e) {}
     state = freshIds(EXERCISES.find(e => e.id === 7).layout);
+    state.exId = 7;
     save();
   }
-  function loadLayout(layout, label) {
+  function loadLayout(layout, label, exId) {
     state = freshIds(layout);
+    state.exId = exId || null;
     selectedComp = selectedWire = null; wireStart = null; placingType = null;
     netHighlight = new Set(); netText = '';
     flash = label ? `✅ Maqueta cargada: ${label} (${state.components.length} componentes · ${state.wires.length} cables). Lo que hubiera en la placa se ha sustituido.` : '';
@@ -361,16 +363,19 @@ const Sandbox = (() => {
     const wc = document.getElementById('sb-wirecolor');
     if (wc) wc.addEventListener('change', e => { wireColor = e.target.value; });
     const loadSel = document.getElementById('sb-load-ex');
-    if (loadSel) loadSel.addEventListener('change', e => {
-      const ex = EXERCISES.find(x => x.id === parseInt(e.target.value, 10));
-      if (ex) loadLayout(ex.layout, `Ejercicio ${ex.id} · ${ex.title}`);
-      e.target.value = '';
-    });
+    if (loadSel) {
+      loadSel.value = state.exId ? String(state.exId) : '';
+      loadSel.addEventListener('change', e => {
+        const ex = EXERCISES.find(x => x.id === parseInt(e.target.value, 10));
+        if (ex) loadLayout(ex.layout, `Ejercicio ${ex.id} · ${ex.title}`, ex.id);
+      });
+    }
     const clearBtn = document.getElementById('sb-clear');
     if (clearBtn) clearBtn.addEventListener('click', () => {
-      state = { components: [], wires: [] };
+      state = { components: [], wires: [], exId: null };
       selectedComp = selectedWire = null; placingType = null; wireStart = null;
       netHighlight = new Set(); netText = ''; flash = '';
+      if (loadSel) loadSel.value = '';
       save(); render();
     });
     if (!Sandbox._keyBound) {
