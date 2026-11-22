@@ -63,9 +63,9 @@ const App = (() => {
 
     <section class="card">
       <h2><span class="h-ico">⚡</span>Esquema eléctrico</h2>
-      <p>El circuito a pelo: solo electricidad, alimentado por una <b>fuente de 5 V</b> en vez del Arduino. Fuera microcontrolador, fuera código, fuera pines.</p>
-      <div class="svg-wrap">${Schematic.draw(ex, false)}</div>
-      <p class="legend">Cada fila es una rama. Donde el Arduino alimentaba un componente, aquí manda la <b>Fuente 5 V</b>. Donde el circuito «hablaba» con la placa (un pulsador o un sensor que la placa escuchaba), queda un terminal abierto: <b>Señal</b>. Y lo que solo existía gracias al microcontrolador ni siquiera aparece: sin cerebro, no hay nada que lo sostenga.</p>
+      <p>El circuito a pelo, dibujado como los de los libros: una <b>batería de 5 V</b> en vez del Arduino, y la corriente recorriendo las ramas. Fuera microcontrolador, fuera código, fuera pines.</p>
+      <div class="svg-wrap">${Schematic.drawElectric(ex)}</div>
+      <p class="legend">La batería alimenta dos raíles: el de arriba sale de su <b>+</b> y el de abajo vuelve a su <b>−</b> (GND). Cada columna es una rama en paralelo: la corriente baja por ella atravesando sus componentes, y la flecha roja marca su sentido (<i>I</i>). Donde el circuito «hablaba» con la placa queda el raíl intermedio <b>Señal</b>, que no toca la batería: por ahí no manda corriente, ahí la placa escuchaba. Y lo que solo existía gracias al microcontrolador ni siquiera aparece: sin cerebro, no hay nada que lo sostenga.</p>
     </section>
 
     <section class="card">

@@ -140,5 +140,108 @@ const Schematic = (() => {
     return s;
   }
 
-  return { draw };
+  /* El esquema eléctrico como CIRCUITO de verdad (como los de los libros):
+     la fuente es una batería dibujada a la izquierda, con su + arriba y su − abajo;
+     dos raíles (arriba el +, abajo GND) y cada rama una columna en paralelo que la
+     corriente atraviesa de arriba abajo. El raíl intermedio Señal recoge lo que la
+     placa escuchaba. Las ramas que no van entre raíles se dibujan sueltas debajo. */
+  function battV(x, cy, label) {
+    return `<line x1="${x - 17}" y1="${cy - 7}" x2="${x + 17}" y2="${cy - 7}" stroke="#1d2733" stroke-width="2.2"/>
+            <line x1="${x - 9}" y1="${cy + 7}" x2="${x + 9}" y2="${cy + 7}" stroke="#1d2733" stroke-width="5"/>
+            <text x="${x - 25}" y="${cy - 10}" font-size="14" font-weight="700" fill="#d92b2b">+</text>
+            <text x="${x - 25}" y="${cy + 17}" font-size="14" font-weight="700" fill="#1d2733">−</text>
+            <text x="${x}" y="${cy + 32}" text-anchor="middle" font-size="12" font-weight="700" fill="#43525f">${esc(label)}</text>`;
+  }
+
+  function drawElectric(ex) {
+    const branches = (ex.circuit || []).map(electrify).filter(Boolean);
+    const rungs = [], floats = [];
+    for (const br of branches) {
+      if (br.a === '+5V' && br.b === 'GND') rungs.push({ ...br, kind: 'full' });
+      else if (br.a === '+5V' && br.b === 'SEÑAL') rungs.push({ ...br, kind: 'top-signal' });
+      else if (br.a === 'SEÑAL' && br.b === 'GND') rungs.push({ ...br, kind: 'signal-bottom' });
+      else if (br.a === '+9V' && br.b === 'GND') rungs.push({ ...br, kind: 'full9' });
+      else floats.push(br);
+    }
+    const order = { full: 0, 'top-signal': 1, 'signal-bottom': 2, full9: 3 };
+    rungs.sort((p, q) => order[p.kind] - order[q.kind]);
+
+    const maxK = Math.max(1, ...rungs.map(r => r.via.length));
+    const topY = 64, span = maxK === 1 ? 178 : 96 * maxK + 62;
+    const botY = topY + span, busY = Math.round((topY + botY) / 2), midY = Math.round((topY + botY) / 2);
+    const rungX = i => 172 + i * 118;
+    const sigIdx = rungs.map((r, i) => (r.kind.includes('signal') ? i : -1)).filter(i => i >= 0);
+    const hasSignal = sigIdx.length > 0;
+    const first9 = rungs.findIndex(r => r.kind === 'full9');
+    const has9 = first9 >= 0;
+    const lastMain = has9 ? first9 - 1 : rungs.length - 1;
+    const mainRailEnd = rungs.length ? rungX(Math.max(0, lastMain)) + 44 : 216;
+    const batt9X = has9 ? rungX(rungs.length - 1) + 122 : 0;
+    const railEnd = has9 ? batt9X : (rungs.length ? rungX(rungs.length - 1) + 56 : 260);
+    const floatW = floats.length ? 210 + Math.max(...floats.map(f => f.via.length)) * 96 + 130 : 0;
+    const W = Math.max(railEnd + (hasSignal ? 76 : 30), floatW, 560);
+    const floatY0 = botY + 58;
+    const H = floats.length ? floatY0 + floats.length * 68 + 4 : botY + 42;
+
+    let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">`;
+    /* batería principal y raíles */
+    s += `<line x1="56" y1="${topY}" x2="56" y2="${midY - 7}" stroke="#1d2733" stroke-width="2.2"/>
+          <line x1="56" y1="${midY + 7}" x2="56" y2="${botY}" stroke="#1d2733" stroke-width="2.2"/>`;
+    s += battV(56, midY, '5 V');
+    s += `<line x1="56" y1="${topY}" x2="${mainRailEnd}" y2="${topY}" stroke="#1d2733" stroke-width="2.2"/>
+          <line x1="56" y1="${botY}" x2="${railEnd}" y2="${botY}" stroke="#1d2733" stroke-width="2.2"/>`;
+    /* flecha de la corriente en el raíl de vuelta */
+    s += `<polygon points="102,${botY} 118,${botY - 5} 118,${botY + 5}" fill="#d92b2b"/>
+          <text x="110" y="${botY + 21}" text-anchor="middle" font-size="11.5" font-style="italic" fill="#d92b2b">corriente I</text>`;
+    /* raíl Señal */
+    if (hasSignal) {
+      const x1 = rungX(sigIdx[0]), x2 = rungX(sigIdx[sigIdx.length - 1]);
+      s += `<line x1="${x1}" y1="${busY}" x2="${x2}" y2="${busY}" stroke="#b26a00" stroke-width="2.2"/>
+            <text x="${x2 + 12}" y="${busY + 4}" font-size="12.5" font-weight="700" fill="#b26a00">Señal</text>`;
+    }
+    /* batería de 9 V si la hay */
+    if (has9) {
+      s += `<line x1="${rungX(first9)}" y1="${topY}" x2="${batt9X}" y2="${topY}" stroke="#1d2733" stroke-width="2.2"/>
+            <line x1="${batt9X}" y1="${topY}" x2="${batt9X}" y2="${midY - 7}" stroke="#1d2733" stroke-width="2.2"/>
+            <line x1="${batt9X}" y1="${midY + 7}" x2="${batt9X}" y2="${botY}" stroke="#1d2733" stroke-width="2.2"/>`;
+      s += battV(batt9X, midY, '9 V');
+    }
+    /* ramas en paralelo */
+    rungs.forEach((r, i) => {
+      const x = rungX(i);
+      const y1 = r.kind === 'signal-bottom' ? busY : topY;
+      const y2 = r.kind === 'top-signal' ? busY : botY;
+      s += `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#1d2733" stroke-width="2.2"/>`;
+      if (r.kind !== 'signal-bottom') s += `<circle cx="${x}" cy="${topY}" r="3.2" fill="#1d2733"/>`;
+      if (r.kind !== 'top-signal') s += `<circle cx="${x}" cy="${botY}" r="3.2" fill="#1d2733"/>`;
+      if (r.kind.includes('signal')) s += `<circle cx="${x}" cy="${busY}" r="3.2" fill="#b26a00"/>`;
+      const k = r.via.length;
+      r.via.forEach(([tipo, label], j) => {
+        const cy = Math.round(y1 + (j + 1) * (y2 - y1) / (k + 1));
+        if (tipo === 'motor') {
+          s += `<line x1="${x}" y1="${cy - 46}" x2="${x}" y2="${cy + 46}" stroke="#43525f" stroke-width="2"/>
+                <circle cx="${x}" cy="${cy}" r="14" fill="#eef4ff" stroke="#1d2733" stroke-width="2"/>
+                <text x="${x}" y="${cy + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="#1d2733">M</text>`;
+        } else {
+          s += `<g transform="translate(${x} ${cy}) rotate(90)">${symbol(tipo, 0, 0, '')}</g>`;
+        }
+        const lab = String(label || tipo).replace(/\s*\([^)]*\)/g, '');
+        s += `<text x="${x + 15}" y="${cy + 4}" font-size="11.5" fill="#43525f">${esc(lab)}</text>`;
+      });
+    });
+    /* ramas sueltas (no van entre raíles) */
+    floats.forEach((br, i) => {
+      const y = floatY0 + i * 68 + 14;
+      s += terminal(br.a, 118, y, false, 'a', true);
+      s += `<line x1="118" y1="${y}" x2="164" y2="${y}" stroke="#43525f" stroke-width="2"/>`;
+      br.via.forEach(([tipo, label], j) => { s += symbol(tipo, 210 + j * 96, y, label); });
+      const lastX = 210 + (br.via.length - 1) * 96;
+      s += `<line x1="${lastX + 46}" y1="${y}" x2="${lastX + 92}" y2="${y}" stroke="#43525f" stroke-width="2"/>`;
+      s += terminal(br.b, lastX + 92, y, false, 'b', true);
+    });
+    s += `</svg>`;
+    return s;
+  }
+
+  return { draw, drawElectric };
 })();
