@@ -277,6 +277,24 @@ const Board = (() => {
     transistor:drawTransistor, hbridge:(c,L)=>drawIc(c,L,'L293D'), opto:(c,L)=>drawIc(c,L,'4N35'),
     lcd:drawLcd, battery:drawBattery, foil:drawFoil };
 
+  /* Un componente suelto como grupo SVG (lo usa render y el sandbox para el fantasma) */
+  function compGroup(c, opts = {}) {
+    const legIds = legsOf(c);
+    if (legIds.some(l => !l)) return '';
+    const L = legIds.map(pointXY);
+    const body = DRAW[c.type] ? DRAW[c.type](c, L) : '';
+    let sel = '';
+    if (opts.selected) {
+      const xs = L.map(p => p.x), ys = L.map(p => p.y);
+      sel = `<rect x="${Math.min(...xs) - 24}" y="${Math.min(...ys) - 52}" width="${Math.max(...xs) - Math.min(...xs) + 48}" height="${Math.max(...ys) - Math.min(...ys) + 76}" rx="8" fill="none" stroke="#00979d" stroke-width="2" stroke-dasharray="6 4"/>`;
+    }
+    const dots = legIds.map(l => { const { x, y } = pointXY(l); return `<circle cx="${x}" cy="${y}" r="2.2" fill="#5c646a"/>`; }).join('');
+    const attrs = opts.ghost
+      ? `opacity="0.55" style="pointer-events:none"`
+      : (opts.interactive === false ? '' : `class="comp" data-id="${c.id}" style="cursor:grab"`);
+    return `<g ${attrs}>${body}${sel}${dots}</g>`;
+  }
+
   /* ---------- Render completo ---------- */
   function wirePath(a, b) {
     const dy = Math.max(26, Math.abs(b.y - a.y) * 0.4);
@@ -346,22 +364,12 @@ const Board = (() => {
     }
     /* componentes */
     for (const c of state.components) {
-      const legIds = legsOf(c);
-      if (legIds.some(l => !l)) continue;
-      const L = legIds.map(pointXY);
-      let body = DRAW[c.type] ? DRAW[c.type](c, L) : '';
-      let sel = '';
-      if (opts.selectedComp === c.id) {
-        const xs = L.map(p=>p.x), ys = L.map(p=>p.y);
-        sel = `<rect x="${Math.min(...xs)-24}" y="${Math.min(...ys)-52}" width="${Math.max(...xs)-Math.min(...xs)+48}" height="${Math.max(...ys)-Math.min(...ys)+76}" rx="8" fill="none" stroke="#00979d" stroke-width="2" stroke-dasharray="6 4"/>`;
-      }
-      s += `<g class="${opts.interactive ? 'comp' : ''}" ${opts.interactive ? `data-id="${c.id}" style="cursor:grab"` : ''}>${body}${sel}</g>`;
-      s += legIds.map(l => { const {x,y} = pointXY(l); return `<circle cx="${x}" cy="${y}" r="2.2" fill="#5c646a"/>`; }).join('');
+      s += compGroup(c, { selected: opts.selectedComp === c.id, interactive: opts.interactive });
     }
     /* capa de interacción: agujeros y pines clicables */
     if (opts.hits) {
-      for (const h of allHoles()) { const {x,y} = pointXY(h); s += `<circle class="hit" data-point="${h}" cx="${x}" cy="${y}" r="7.2" fill="rgba(0,0,0,0)" style="cursor:pointer"/>`; }
-      for (const p of Object.keys(PIN_POS)) { const {x,y} = PIN_POS[p]; s += `<circle class="hit" data-point="P:${p}" cx="${x}" cy="${y}" r="8.5" fill="rgba(0,0,0,0)" style="cursor:pointer"/>`; }
+      for (const h of allHoles()) { const {x,y} = pointXY(h); s += `<circle class="hit" data-point="${h}" cx="${x}" cy="${y}" r="10" fill="rgba(0,0,0,0)" style="cursor:pointer"/>`; }
+      for (const p of Object.keys(PIN_POS)) { const {x,y} = PIN_POS[p]; s += `<circle class="hit" data-point="P:${p}" cx="${x}" cy="${y}" r="11.5" fill="rgba(0,0,0,0)" style="cursor:pointer"/>`; }
     }
     if (opts.extra) s += opts.extra;
     s += `</svg>`;
@@ -369,5 +377,6 @@ const Board = (() => {
   }
 
   return { COLS, ROW_ORDER, ROW_Y, BOARD_W, BOARD_H, UNO, PIN_POS, colX, parsePoint, pointXY,
-           islandOf, shiftHole, allHoles, DEFS, legsOf, computeNets, netPoints, fmtOhms, bandsFor, render };
+           islandOf, shiftHole, allHoles, DEFS, legsOf, computeNets, netPoints, fmtOhms, bandsFor, render,
+           drawComp: (c, ghost) => compGroup(c, { ghost: !!ghost }) };
 })();

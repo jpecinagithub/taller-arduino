@@ -115,15 +115,9 @@ const App = (() => {
     <div class="ex-head"><div>
       <div class="ex-kicker">Tu laboratorio</div>
       <h1 class="ex-title">Sandbox editable</h1>
-      <p style="color:var(--muted);max-width:720px;line-height:1.6;margin:6px 0 0">Una protoboard como la de Tinkercad para jugar sin miedo: añade y quita componentes, cambia sus parámetros, mueve y recablea… y usa el modo <b>Red</b> para ver las islas de conexión, la lección del proyecto 07. Ojo: esto es un editor de maquetas, no un simulador — no ejecuta el código ni enciende los LED; para simular sigue mandando Tinkercad.</p>
+      <p style="color:var(--muted);max-width:720px;line-height:1.6;margin:6px 0 0">Una protoboard como la de Tinkercad para jugar sin miedo, <b>sin modos</b>: clic en un agujero y clic en otro para cablear (la isla del origen se ilumina sola, la lección del proyecto 07), arrastra los componentes para moverlos y elige en la paleta para añadir nuevos. Ojo: esto es un editor de maquetas, no un simulador — no ejecuta el código ni enciende los LED; para simular sigue mandando Tinkercad.</p>
     </div></div>
     <div class="sb-toolbar" style="margin-top:16px">
-      <div id="sb-modes" style="display:flex;gap:6px">
-        <button class="tool-btn" data-mode="mover">🖐️ Mover</button>
-        <button class="tool-btn" data-mode="cable">🔌 Cable</button>
-        <button class="tool-btn" data-mode="red">🕸️ Red</button>
-      </div>
-      <div class="sep"></div>
       <label style="font-size:13px;color:var(--muted)">Color del cable <select id="sb-wirecolor">
         <option value="#d92b2b">rojo</option><option value="#2b2b30">negro</option><option value="#f07d18">naranja</option>
         <option value="#d9a416">amarillo</option><option value="#2a9e4f">verde</option><option value="#2456c8">azul</option>

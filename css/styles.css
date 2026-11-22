@@ -89,6 +89,7 @@ pre.code{background:var(--code-bg);color:#d7e7ee;border-radius:11px;padding:16px
 .sb-palette h3,.props h3{margin:2px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
 .pal-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid var(--line);background:#fbfcfd;border-radius:9px;padding:7px 9px;margin-bottom:6px;cursor:pointer;font-size:13.5px;color:var(--ink)}
 .pal-item:hover{border-color:var(--teal);background:#f0f8f8}
+.pal-item.active{border-color:var(--teal);background:#dff2f2;box-shadow:0 0 0 1px var(--teal) inset;font-weight:600}
 .pal-item .pal-ico{font-size:16px}
 .sb-canvas{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;overflow:auto}
 .sb-canvas svg{display:block}
