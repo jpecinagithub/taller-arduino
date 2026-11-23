@@ -370,7 +370,7 @@ void loop() {
 EXERCISES.push(
 /* ================= 08 · RELOJ DE ARENA ================= */
 { id:8, title:'Reloj de arena digital', short:'Reloj de arena', design:'08 Reloj de arena',
-  status:'planned', date:null,
+  status:'done', date:'23 nov 2026',
   intro:'Seis LED que se van encendiendo uno a uno a medida que pasa el tiempo, como la arena que cae. Al «girar el reloj» — el sensor de inclinación lo detecta — todos se apagan y la cuenta empieza de nuevo. El primer proyecto donde el tiempo manda sin detener el programa.',
   ideas:[
     'millis() es mirar el reloj de pared; delay() es echarse una siesta. Con millis() el programa sigue atento (al sensor, a los botones) mientras el tiempo pasa: nada de dormir.',
@@ -439,7 +439,7 @@ void loop() {
 
 /* ================= 09 · MOLINETE ================= */
 { id:9, title:'Molinete motorizado', short:'Molinete', design:'09 Molinete',
-  status:'planned', date:null,
+  status:'done', date:'23 nov 2026',
   intro:'Un motor de verdad gobernado por el potenciómetro: al girar el mando, el molinete acelera o frena. Entre el Arduino y el motor aparece el personaje nuevo del kit: el transistor, porque un pin no puede alimentar a un motor hambriento.',
   ideas:[
     'El transistor es un grifo con mano pequeña: una señal débil en la puerta (G) gobierna una corriente grande entre D y S. El Arduino ordena; la batería paga. Es la respuesta a la lección del proyecto 06: la LDR dejaba pasar poca corriente; el motor necesita músculo.',
