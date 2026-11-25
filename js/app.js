@@ -74,7 +74,7 @@ const App = (() => {
       <div class="svg-wrap">${Schematic.draw(ex, true)}</div>
       <table class="pin-table"><thead><tr><th>Origen</th><th>Pasa por</th><th>Destino</th></tr></thead><tbody>${pinRows(ex)}</tbody></table>
       <div class="code-head" style="margin-top:18px">
-        <h2 style="font-size:16px"><span class="h-ico">💻</span>${ex.status === 'done' ? 'El código final (el que funcionó)' : 'El código (del libro, punto de partida)'}</h2>
+        <h2 style="font-size:16px"><span class="h-ico">💻</span>${ex.status === 'done' && !ex.bookCode ? 'El código final (el que funcionó)' : ex.bookCode ? 'El código (del libro; este lo hizo Jon por su cuenta)' : 'El código (del libro, punto de partida)'}</h2>
         <button class="btn ghost small" id="copy-code">Copiar código</button>
       </div>
       <pre class="code">${esc(ex.code)}</pre>
@@ -82,7 +82,7 @@ const App = (() => {
 
     <section class="card">
       <h2><span class="h-ico">🧩</span>Maqueta en la protoboard</h2>
-      <p>Así queda montado en la placa${ex.status === 'done' ? ' (tal como lo construimos en Tinkercad)' : ' (maqueta prevista según el libro; la ajustaremos al construirlo)'}. Los raíles + y − se alimentan desde los pines 5V y GND del UNO, y recuerda: cada raíl está cortado a mitad de placa (entre las columnas 30 y 31).</p>
+      <p>Así queda montado en la placa${ex.status === 'done' && !ex.bookCode ? ' (tal como lo construimos en Tinkercad)' : ex.bookCode ? ' (maqueta prevista según el libro; el montaje real lo hizo Jon por su cuenta)' : ' (maqueta prevista según el libro; la ajustaremos al construirlo)'}. Los raíles + y − se alimentan desde los pines 5V y GND del UNO, y recuerda: cada raíl está cortado a mitad de placa (entre las columnas 30 y 31).</p>
       <div class="svg-wrap">${Board.render(ex.layout)}</div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="to-sandbox">🧪 Abrir esta maqueta en el sandbox</button>

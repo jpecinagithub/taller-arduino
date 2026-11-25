@@ -370,7 +370,7 @@ void loop() {
 EXERCISES.push(
 /* ================= 08 · RELOJ DE ARENA ================= */
 { id:8, title:'Reloj de arena digital', short:'Reloj de arena', design:'08 Reloj de arena',
-  status:'done', date:'23 nov 2026',
+  status:'done', date:'23 nov 2026', bookCode:true,
   intro:'Seis LED que se van encendiendo uno a uno a medida que pasa el tiempo, como la arena que cae. Al «girar el reloj» — el sensor de inclinación lo detecta — todos se apagan y la cuenta empieza de nuevo. El primer proyecto donde el tiempo manda sin detener el programa.',
   ideas:[
     'millis() es mirar el reloj de pared; delay() es echarse una siesta. Con millis() el programa sigue atento (al sensor, a los botones) mientras el tiempo pasa: nada de dormir.',
@@ -439,7 +439,7 @@ void loop() {
 
 /* ================= 09 · MOLINETE ================= */
 { id:9, title:'Molinete motorizado', short:'Molinete', design:'09 Molinete',
-  status:'done', date:'23 nov 2026',
+  status:'done', date:'23 nov 2026', bookCode:true,
   intro:'Un motor de verdad gobernado por el potenciómetro: al girar el mando, el molinete acelera o frena. Entre el Arduino y el motor aparece el personaje nuevo del kit: el transistor, porque un pin no puede alimentar a un motor hambriento.',
   ideas:[
     'El transistor es un grifo con mano pequeña: una señal débil en la puerta (G) gobierna una corriente grande entre D y S. El Arduino ordena; la batería paga. Es la respuesta a la lección del proyecto 06: la LDR dejaba pasar poca corriente; el motor necesita músculo.',
@@ -539,55 +539,79 @@ void loop() {
 
 /* ================= 11 · BOLA DE CRISTAL ================= */
 { id:11, title:'Bola de cristal', short:'Bola de cristal', design:'11 Bola de cristal',
-  status:'planned', date:null,
+  status:'done', date:'25 nov 2026',
   intro:'Una bola mágica con pantalla: agitas el circuito (el sensor de inclinación lo nota) y la LCD 16×2 responde con una frase al azar de su repertorio. Es la llegada de las pantallas: el Arduino ya no solo enciende luces, escribe texto.',
   ideas:[
-    'La LCD no recibe letras: recibe órdenes por 6 cables de señal que la biblioteca LiquidCrystal traduce. Otra vez la lección del servo: la biblioteca conoce el idioma; tú solo escribes el texto.',
-    'random() necesita una semilla imprevisible o repetirá la misma «suerte» en cada encendido: se siembra leyendo un pin al aire, que siempre baila un poco.',
-    'Las respuestas viven en una lista (un array de textos) y el azar elige el índice: datos y código se separan — para cambiar las frases no hay que tocar la lógica.',
+    'La LCD no recibe letras: recibe órdenes. Y ni siquiera por los 8 cables de datos: bastan 4 (D4–D7) más RS y E. La biblioteca LiquidCrystal conoce el idioma; tú solo escribes el texto.',
+    'El potenciómetro cambia de oficio: ya no es un sensor que el Arduino lee (como en el proyecto 05), sino el grifo de presión de V0, el pin del contraste. El Arduino ni se entera de que existe: calibra la pantalla directamente.',
+    'La bola responde al cambio, no al estado: el código compara cada lectura con la anterior y solo sortea cuando el sensor se mueve. Y random() necesita una semilla leída de un pin al aire, o repetirá la misma «suerte» en cada encendido.',
   ],
-  parts:['Pantalla LCD 16×2','Sensor de inclinación','Resistencia 10 kΩ','Potenciómetro (contraste)','Cables'],
+  parts:['Pantalla LCD 16×2','Sensor de inclinación','Resistencia 10 kΩ','Resistencia 220 Ω (luz de fondo)','Potenciómetro (contraste)','Cables'],
   circuit:[
     { a:'D12', via:[['lcd','LCD 16×2']], b:'GND', note:'Seis señales (RS, E, D4–D7) más alimentación: la biblioteca LiquidCrystal habla con la pantalla por ellas.' },
     { a:'+5V', via:[['tilt','Inclinación']], b:'D6' },
-    { a:'D6', via:[['res','10 kΩ']], b:'GND', note:'Agitar la bola = cerrar el sensor: D6 lee HIGH y la bola responde.' },
+    { a:'D6', via:[['res','10 kΩ']], b:'GND', note:'La pull-down sujeta D6 a masa mientras el sensor está abierto. La bola no responde al nivel, sino al CAMBIO: cada vez que el sensor abre o cierra, nueva respuesta.' },
+    { a:'+5V', via:[['pot','Potenciómetro']], b:'GND', note:'Su pata central va a V0 de la pantalla: es un divisor que fija el contraste. El Arduino no lo lee; calibra la pantalla directamente.' },
+    { a:'+5V', via:[['res','220 Ω'],['lcd','Luz de fondo']], b:'GND', note:'En Tinkercad la luz de fondo es un LED desnudo: sin esta resistencia se pasa de corriente y la pantalla se quema (estrella roja). El módulo real la lleva dentro. Costó una pantalla aprenderlo.' },
   ],
   code:
 `#include <LiquidCrystal.h>
 
+// RS=12, E=11, D4=5, D5=4, D6=3, D7=2: los pines de señal
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-const int switchPin = 6;
 
-const char* respuestas[8] = {
-  "Si", "Seguro que si", "Sin duda",
-  "Pregunta otra vez", "No lo veo claro",
-  "Mejor no", "No", "Ni lo suenes"
-};
+const int pinSensor = 6;
+int estado = 0;
+int estadoAnterior = 0;
 
 void setup() {
   lcd.begin(16, 2);
-  pinMode(switchPin, INPUT);
-  randomSeed(analogRead(A5));   // semilla: un pin al aire
-  lcd.print("La bola de cristal");
+  pinMode(pinSensor, INPUT);
+  Serial.begin(9600);
+
+  lcd.print("La bola de");
   lcd.setCursor(0, 1);
-  lcd.print("esta lista");
+  lcd.print("cristal dice:");
+
+  // Semilla al azar: el ruido de un pin analogico libre
+  randomSeed(analogRead(0));
 }
 
 void loop() {
-  if (digitalRead(switchPin) == HIGH) {
-    int r = random(8);
+  estado = digitalRead(pinSensor);
+
+  if (estado != estadoAnterior) {
+    Serial.print("Sensor: ");
+    Serial.println(estado);
+
+    int respuesta = random(8);
     lcd.clear();
+    lcd.setCursor(0, 0);
     lcd.print("La bola dice:");
     lcd.setCursor(0, 1);
-    lcd.print(respuestas[r]);
-    delay(600);
+
+    switch (respuesta) {
+      case 0: lcd.print("Si, seguro"); break;
+      case 1: lcd.print("Muy probable"); break;
+      case 2: lcd.print("Sin duda"); break;
+      case 3: lcd.print("Buen presagio"); break;
+      case 4: lcd.print("No esta claro"); break;
+      case 5: lcd.print("Pregunta luego"); break;
+      case 6: lcd.print("Lo dudo mucho"); break;
+      case 7: lcd.print("No lo creo"); break;
+    }
   }
+  estadoAnterior = estado;
 }`,
   layout:{ components:[
       C('lcd','A8'),
+      C('resistor','B2',0,{ value:220 }),
+      C('pot','B36',0,{ value:10000 }),
       C('tilt','H24'), C('resistor','H28',0,{ value:10000 }),
     ], wires:[
-      W('P:5V','B+14',RED), W('P:GND','B-14',BLK), W('B-29','B-33',BLK),
+      W('P:5V','B+14',RED), W('P:GND','B-14',BLK), W('B-29','B-33',BLK), W('B+29','B+33',RED),
+      W('A2','B+2',RED),
+      W('A36','B+36',RED), W('A38','B-38',BLK), W('A37','C7',YEL),
       W('C8','P:D12',PUR), W('C9','P:D11',BLU), W('C10','P:D5',GRN),
       W('C11','P:D4',YEL), W('C12','P:D3',ORG), W('C13','P:D2',RED),
       W('J24','B+24',RED), W('J26','J28',ORG), W('F32','B-32',BLK), W('G26','P:D6',ORG),
